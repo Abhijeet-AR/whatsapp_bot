@@ -27,6 +27,6 @@ for i in range(10):
             
             no_msgs = frnd_container[0].text
             
-            print(name, no_msgs)
+            print(name + ':' + no_msgs)
 
     t.sleep(5)
