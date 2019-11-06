@@ -22,8 +22,11 @@ for i in range(10):
     for container in left_frame:
         frnd_container = container.findAll("span", {"class": "P6z4j"})
         if frnd_container != []:
-            name_container = container.findAll("span", {"class": "_19RFN _1ovWX"})
-            name = name_container[0]["title"]
-            print(name)
+            name_container = container.find("span", {"class": "_19RFN _1ovWX"})
+            name = name_container["title"]
+            
+            no_msgs = frnd_container[0].text
+            
+            print(name, no_msgs)
 
     t.sleep(5)
