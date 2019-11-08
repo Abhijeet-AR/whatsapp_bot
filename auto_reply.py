@@ -1,3 +1,6 @@
+import csv
+import random
+import smtplib
 import time as t
 
 from bs4 import BeautifulSoup as soup
@@ -105,17 +108,71 @@ def check_new_msgs():
     return frnds
 
 
-def gen_reply(msg):
-    return msg
+def convert_data():
+    inputs = []
+    outputs = []
+    with open('replies_data.csv') as data_file:
+        reader = csv.reader(data_file)
+
+        flag = True
+        for row in reader:
+            if flag:
+                inputs.append(set(row))
+                flag = False
+
+            else:
+                outputs.append(row)
+                flag = True
+
+    return inputs, outputs
+
+
+def send_mail(name, msg):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+
+    server.ehlo()
+    server.starttls()
+    server.ehlo()
+
+    server.login('abhijeetarabhi@gmail.com', 'vlkwpprmfrdmkrfb')
+
+    subject = 'Unknown message from ' + name
+    body = 'Message is ' + msg
+
+    message = f'Subject : {subject}\n\n{body}\n'
+
+    server.sendmail('abhijeetarabhi@whatsapp.com', ['abhijeet_abhi@live.co.uk', 'bandanikhilreddy05@gmail.com'],
+                    message)
+
+    print('email sent')
+
+
+def gen_reply(name, msg, inputs, outputs):
+    msg = msg.lower().strip('!').strip('?').strip('.')
+    # print("generating reply for ", msg)
+    for i in range(len(inputs)):
+        if msg in inputs[i]:
+            rand_ind = random.randrange(0, len(outputs[i]))
+            reply = outputs[i][rand_ind]
+            # print('returning reply')
+            return reply
+
+    print('Unknown message: ' + msg + ' from: ' + name)
+    send_mail(name, msg)
+    return
 
 
 options = webdriver.ChromeOptions();
 options.add_argument('--user-data-dir=./User_Data')
-driver = webdriver.Chrome('/Users/AR/Documents/Programming/Python/Pycharm/whatsapp_bot/chromedriver', chrome_options=options)
+driver = webdriver.Chrome('/Users/AR/Documents/Programming/Python/Pycharm/whatsapp_bot/chromedriver',
+                          chrome_options=options)
 driver.get('https://web.whatsapp.com/')
 
-best_frnds = ['Banda', 'Ainesh', 'Dad', 'Mom']
+inputs, outputs = convert_data()
 
+best_frnds = ['Banda', 'Ainesh', 'Dad', 'Mom', 'Indu']
+
+t.sleep(2)
 frnds = check_new_msgs()
 
 try:
@@ -128,23 +185,34 @@ try:
 
             t.sleep(0.05)
             wait_typing(name)
-            curr_msgs = read_msgs()
 
-            print('Message : ', curr_msgs)
+            while True:
+                try:
+                    curr_msgs = read_msgs()
+                    break
+
+                except IndexError:
+                    t.sleep(1)
+
+            print('Messages: ', curr_msgs)
 
             if curr_msgs[0] == '':
                 t.sleep(1)
                 continue
 
             for msg in curr_msgs[::-1]:
-                reply = gen_reply(msg)
-                send_reply(reply)
-                print('Reply : ', reply)
+                # print(msg)
+                reply = gen_reply(name, msg, inputs, outputs)
+                if reply:
+                    # print(reply)
+                    send_reply(reply)
+                    print('Reply : ', reply)
 
         frnds = check_new_msgs()
-
-        if not frnds:
+        print('hkhlhlhh', frnds)
+        if filter(lambda f: f in best_frnds, frnds):
+            print('waiting for new messges')
             wait_new_msgs()
 
-except:
+except KeyboardInterrupt:
     driver.close()
