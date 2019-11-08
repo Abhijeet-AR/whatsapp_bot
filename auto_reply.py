@@ -7,6 +7,19 @@ from bs4 import BeautifulSoup as soup
 from selenium import webdriver
 
 
+def sort_replies():
+    data = []
+    with open('replies_data.csv') as data_file:
+        reader = csv.reader(data_file)
+        for row in reader:
+            data.append(row)
+
+    with open('replies_data.csv', 'w') as data_file:
+        writer = csv.writer(data_file, delimiter=',')
+        for row in data:
+            writer.writerow(sorted(filter(lambda x: x != '', row)))
+
+
 def read_msgs():
     whatsapp_ps = driver.page_source
     page_soup = soup(whatsapp_ps, "html.parser")
@@ -141,7 +154,7 @@ def send_mail(name, msg):
 
     message = f'Subject : {subject}\n\n{body}\n'
 
-    server.sendmail('abhijeetarabhi@whatsapp.com', ['abhijeet_abhi@live.co.uk', 'bandanikhilreddy05@gmail.com'],
+    server.sendmail('abhijeetarabhi@whatsapp.com', ['abhijeet_abhi@live.co.uk'],
                     message)
 
     print('email sent')
@@ -163,7 +176,12 @@ def prev_sent():
 
 
 def gen_reply(name, msg, inputs, outputs):
-    msg = msg.lower().strip('!').strip('?').strip('.')
+    temp_msg = ''
+    for m in msg.lower().strip():
+        if m.isalpha() or m == ' ':
+            temp_msg += m
+
+    msg = temp_msg
     print('msg', msg)
 
     if msg in inputs[0]:
@@ -190,19 +208,19 @@ driver = webdriver.Chrome('/Users/AR/Documents/Programming/Python/Pycharm/whatsa
                           chrome_options=options)
 driver.get('https://web.whatsapp.com/')
 
+sort_replies()
 inputs, outputs = convert_data()
 
-best_frnds = ['Banda', 'Ainesh', 'Dad', 'Mom', 'Indu']
+best_frnds = ['Banda', 'Ainesh', 'Dad', 'Mom', 'Indu', 'Amitha']
 
 t.sleep(2)
-
 
 try:
     while True:
         frnds = check_new_msgs()
-        print(list(filter(lambda f: f in best_frnds, frnds)))
+        # print(list(filter(lambda f: f in best_frnds, frnds)))
         if list(filter(lambda f: f in best_frnds, frnds)) == []:
-            print('waiting for new messges')
+            # print('waiting for new messges')
             wait_new_msgs()
 
         for name in filter(lambda f: f in best_frnds, frnds):
@@ -237,7 +255,7 @@ try:
                 # print(msg)
                 reply = gen_reply(name, msg, inputs, outputs)
                 if reply:
-                    #print(reply)
+                    # print(reply)
                     send_reply(reply)
                     print('Reply : ', reply)
 
