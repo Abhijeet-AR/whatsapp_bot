@@ -2,6 +2,7 @@ import csv
 import random
 import smtplib
 import time as t
+from difflib import get_close_matches
 
 from bs4 import BeautifulSoup as soup
 from selenium import webdriver
@@ -175,6 +176,7 @@ def prev_sent():
     return last_msg
 
 
+'''
 def gen_reply(name, msg, inputs, outputs):
     temp_msg = ''
     for m in msg.lower().strip():
@@ -200,16 +202,54 @@ def gen_reply(name, msg, inputs, outputs):
     print('Unknown message: ' + msg + ' from: ' + name)
     send_mail(name, msg)
     return
+'''
+
+def gen_reply(name, msg):
+    with open('replies_data.csv') as data_file:
+        msg = msg.lower()
+        reader = csv.reader(data_file)
+
+        ans = False
+        flag = True
+        reps = []
+        for row in reader:
+            if flag:
+                temp = get_close_matches(msg, row)
+                # print(temp, row)
+                if temp:
+                    print('matches : ', temp, '              ', row)
+                    reps.append([temp[-1][0], temp[-1]])
+                    # print(reps)
+                    ans = True
+
+                flag = False
+            else:
+                if ans:
+                    rand_ind = random.randrange(0, len(row))
+                    reply = row[rand_ind]
+                    reps[-1].append(reply)
+
+                flag = True
+
+    max_match = [0, '']
+    for r in reps:
+        if r[1] == msg:
+            return r[2]
+
+        if max_match[0] < r[0]:
+            max_match = [r[0], r[2]]
+
+    return max_match[1]
 
 
 options = webdriver.ChromeOptions()
 options.add_argument('--user-data-dir=./User_Data')
 driver = webdriver.Chrome('/Users/AR/Documents/Programming/Python/Pycharm/whatsapp_bot/chromedriver',
-                          chrome_options=options)
+                          options=options)
 driver.get('https://web.whatsapp.com/')
 
 sort_replies()
-inputs, outputs = convert_data()
+# inputs, outputs = convert_data()
 
 best_frnds = ['Banda', 'Ainesh', 'Dad', 'Mom', 'Indu', 'Amitha']
 
@@ -253,7 +293,7 @@ try:
 
             for msg in curr_msgs[::-1]:
                 # print(msg)
-                reply = gen_reply(name, msg, inputs, outputs)
+                reply = gen_reply(name, msg)
                 if reply:
                     # print(reply)
                     send_reply(reply)
